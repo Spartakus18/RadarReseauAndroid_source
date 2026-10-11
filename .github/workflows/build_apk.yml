@@ -26,19 +26,21 @@ jobs:
             unzip "$ZIP_FILE"
           fi
 
-      - name: Fix JVM Target Compatibility (Aggressive)
+      - name: Fix JVM Target Compatibility (Final)
         run: |
-          # On entre dans le dossier du projet
           cd RadarReseauAndroid
           
-          # On remplace TOUTES les occurrences de 1.8 par 17 dans les fichiers Gradle
-          find . -name "build.gradle.kts" -exec sed -i 's/VERSION_1_8/VERSION_17/g' {} +
-          find . -name "build.gradle.kts" -exec sed -i 's/"1.8"/"17"/g' {} +
-          find . -name "build.gradle.kts" -exec sed -i 's/1.8/17/g' {} +
+          # On affiche le contenu AVANT modification pour comprendre
+          echo "=== AVANT MODIFICATION ==="
+          cat app/build.gradle.kts || echo "Fichier app/build.gradle.kts non trouvé"
           
-          # On affiche le contenu du fichier app/build.gradle.kts pour vérifier
-          echo "=== CONTENU DE app/build.gradle.kts ==="
-          cat app/build.gradle.kts || echo "Fichier non trouvé"
+          # On utilise perl pour remplacer TOUTES les occurrences de 1.8 par 17
+          find . -name "build.gradle.kts" -exec perl -pi -e 's/VERSION_1_8/VERSION_17/g' {} +
+          find . -name "build.gradle.kts" -exec perl -pi -e 's/"1\.8"/"17"/g' {} +
+          find . -name "build.gradle.kts" -exec perl -pi -e 's/jvmTarget\s*=\s*"1\.8"/jvmTarget = "17"/g' {} +
+          
+          echo "=== APRÈS MODIFICATION ==="
+          cat app/build.gradle.kts || echo "Fichier app/build.gradle.kts non trouvé"
 
       - name: Build APK
         run: |
