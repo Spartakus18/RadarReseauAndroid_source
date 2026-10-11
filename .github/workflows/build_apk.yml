@@ -26,23 +26,23 @@ jobs:
             unzip "$ZIP_FILE"
           fi
 
-      - name: Fix JVM Target Compatibility
+      - name: Fix JVM Target Compatibility (Aggressive)
         run: |
-          # Trouve tous les fichiers build.gradle.kts et force Java 17 partout
-          find . -name "build.gradle.kts" -maxdepth 4 -exec sed -i 's/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g' {} +
-          find . -name "build.gradle.kts" -maxdepth 4 -exec sed -i 's/jvmTarget = "1.8"/jvmTarget = "17"/g' {} +
-          find . -name "build.gradle.kts" -maxdepth 4 -exec sed -i 's/jvmTarget = "1.8"/jvmTarget = "17"/g' {} +
-          echo "Configuration JVM mise à jour vers Java 17."
+          # On entre dans le dossier du projet
+          cd RadarReseauAndroid
+          
+          # On remplace TOUTES les occurrences de 1.8 par 17 dans les fichiers Gradle
+          find . -name "build.gradle.kts" -exec sed -i 's/VERSION_1_8/VERSION_17/g' {} +
+          find . -name "build.gradle.kts" -exec sed -i 's/"1.8"/"17"/g' {} +
+          find . -name "build.gradle.kts" -exec sed -i 's/1.8/17/g' {} +
+          
+          # On affiche le contenu du fichier app/build.gradle.kts pour vérifier
+          echo "=== CONTENU DE app/build.gradle.kts ==="
+          cat app/build.gradle.kts || echo "Fichier non trouvé"
 
       - name: Build APK
         run: |
-          PROJECT_DIR=$(find . -name "settings.gradle.kts" -maxdepth 3 -exec dirname {} \; | head -n 1)
-          if [ -z "$PROJECT_DIR" ]; then
-            PROJECT_DIR=$(find . -name "build.gradle.kts" -maxdepth 3 -exec dirname {} \; | head -n 1)
-          fi
-          
-          echo "Dossier du projet trouvé : $PROJECT_DIR"
-          cd "$PROJECT_DIR"
+          cd RadarReseauAndroid
           gradle assembleDebug
 
       - name: Upload APK
