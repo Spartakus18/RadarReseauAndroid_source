@@ -26,21 +26,34 @@ jobs:
             unzip "$ZIP_FILE"
           fi
 
-      - name: Fix JVM Target Compatibility (Final)
+      - name: Fix build.gradle.kts inside the project
         run: |
           cd RadarReseauAndroid
-          
-          # On affiche le contenu AVANT modification pour comprendre
-          echo "=== AVANT MODIFICATION ==="
-          cat app/build.gradle.kts || echo "Fichier app/build.gradle.kts non trouvé"
-          
-          # On utilise perl pour remplacer TOUTES les occurrences de 1.8 par 17
-          find . -name "build.gradle.kts" -exec perl -pi -e 's/VERSION_1_8/VERSION_17/g' {} +
-          find . -name "build.gradle.kts" -exec perl -pi -e 's/"1\.8"/"17"/g' {} +
-          find . -name "build.gradle.kts" -exec perl -pi -e 's/jvmTarget\s*=\s*"1\.8"/jvmTarget = "17"/g' {} +
-          
-          echo "=== APRÈS MODIFICATION ==="
-          cat app/build.gradle.kts || echo "Fichier app/build.gradle.kts non trouvé"
+          # On écrase le fichier app/build.gradle.kts avec la version corrigée (Java 17)
+          cat > app/build.gradle.kts << 'EOF'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+          android {
+              namespace = "mg.radarreseau"
+              compileSdk = 35
+              defaultConfig {
+                  applicationId = "mg.radarreseau"
+                  minSdk = 26
+                  targetSdk = 35
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          }
+          EOF
 
       - name: Build APK
         run: |
