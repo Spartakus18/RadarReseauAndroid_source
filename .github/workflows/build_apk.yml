@@ -24,7 +24,6 @@ jobs:
 
       - name: Unzip Project
         run: |
-          # Cherche n'importe quel fichier .zip et le décompresse
           ZIP_FILE=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
           if [ -n "$ZIP_FILE" ]; then
             unzip "$ZIP_FILE"
@@ -33,19 +32,25 @@ jobs:
 
       - name: Build APK
         run: |
-          # Cherche le dossier qui contient le fichier gradlew
-          PROJECT_DIR=$(find . -name "gradlew" -maxdepth 3 -exec dirname {} \; | head -n 1)
+          # Cherche le dossier contenant le fichier settings.gradle.kts ou build.gradle.kts
+          PROJECT_DIR=$(find . -name "settings.gradle.kts" -maxdepth 3 -exec dirname {} \; | head -n 1)
           if [ -z "$PROJECT_DIR" ]; then
-            echo "ERREUR: Impossible de trouver le fichier gradlew. Le projet est peut-être incomplet."
+            PROJECT_DIR=$(find . -name "build.gradle.kts" -maxdepth 3 -exec dirname {} \; | head -n 1)
+          fi
+          
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "ERREUR: Impossible de trouver le dossier du projet (settings.gradle.kts ou build.gradle.kts manquant)."
             exit 1
           fi
+          
+          echo "Dossier du projet trouvé : $PROJECT_DIR"
           cd "$PROJECT_DIR"
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          
+          # On utilise la commande 'gradle' globale car 'gradlew' est manquant
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          # Cherche l'APK n'importe où dans le dossier
           path: "**/app/build/outputs/apk/debug/*.apk"
